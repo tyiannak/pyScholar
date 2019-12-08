@@ -12,6 +12,8 @@ tyiannak@gmail.cm
 
 import argparse
 import scholarly
+import pickle
+import os
 import plotly
 import plotly.graph_objs as go
 
@@ -37,6 +39,11 @@ def read_author_data(author_name):
     return a_data
 
 
+def create_generic_info_table(author_data):
+    for a in author_data:
+        print(a, author_data[a])
+
+
 def parse_arguments():
     """!
     @brief Parse Arguments for calmod testing.
@@ -53,18 +60,39 @@ if __name__ == "__main__":
     args = parse_arguments()
     authors = args.authors
 
-    data = {a: read_author_data(a) for a in authors}
+    if os.path.isfile('temp.pkl'):
+        with open('temp.pkl', 'rb') as f:
+            data = pickle.load(f)
+    else:
+        data = {a: read_author_data(a) for a in authors}
+        with open('temp.pkl', 'wb') as f:
+            pickle.dump(data, f)
     print(data)
 
-    str_titles = []
+    str_titles, specs = [], []
     for a in data:
         str_titles.append(a + " - Info")
         str_titles.append(a + " - Citations Per Year")
         str_titles.append(a + " - Tag cloud")
+        specs.append([{"type": "table"},
+             {"type": "scatter"},
+             {"type": "scatter"}])
 
+    print(specs)
     figs = plotly.tools.make_subplots(rows=len(data), cols=3,
-                                      subplot_titles=str_titles)
+                                      subplot_titles=str_titles,
+                                      specs=specs)
+
     for ia, a in enumerate(data):
+        figs.append_trace(go.Table(header=dict(values=['A Scores', 'B Scores'],
+                        line_color='darkslategray',
+                        fill_color='lightskyblue',
+                        align='left'),
+            cells=dict(values=[[100, 90, 80, 90],  # 1st column
+                               [95, 85, 75, 95]],  # 2nd column
+                       line_color='darkslategray',
+                       fill_color='lightcyan',
+                       align='left')), ia+1, 1)
         figs.append_trace(go.Scatter(x=list(data[a]["cites_per_year"].keys()),
                                      y=list(data[a]["cites_per_year"].values()),
                                      showlegend=False), ia+1, 2)
