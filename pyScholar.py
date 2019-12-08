@@ -56,10 +56,16 @@ if __name__ == "__main__":
     data = {a: read_author_data(a) for a in authors}
     print(data)
 
+    str_titles = []
+    for a in data:
+        str_titles.append(a + " - Info")
+        str_titles.append(a + " - Citations Per Year")
+        str_titles.append(a + " - Tag cloud")
+
     figs = plotly.tools.make_subplots(rows=len(data), cols=3,
-                                      subplot_titles=authors)
+                                      subplot_titles=str_titles)
     for ia, a in enumerate(data):
         figs.append_trace(go.Scatter(x=list(data[a]["cites_per_year"].keys()),
                                      y=list(data[a]["cites_per_year"].values()),
-                                     showlegend=False), ia+1, 1)
+                                     showlegend=False), ia+1, 2)
     plotly.offline.plot(figs, filename="temp.html", auto_open=True)
