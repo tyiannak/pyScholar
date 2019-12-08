@@ -32,7 +32,8 @@ def read_author_data(author_name):
         "pubs": [
             {"title": pub.bib['title'],
              "year": pub.bib['year'] if "year" in pub.bib  else -1,
-             "citedby": pub.citedby if hasattr(pub, "citedby") else 0
+             "citedby": pub.citedby if hasattr(pub, "citedby") else 0,
+             "link": pub.id_citations if hasattr(pub, "id_citations") else ""
              }
             for pub in author.publications]
     }
@@ -49,6 +50,24 @@ def generic_info_table(author_data):
     data_list[0].append("#pubs")
     data_list[1].append(len(author_data["pubs"]))
 
+    return data_list
+
+
+def pubs_table(author_data):
+    data_list = [[], [], [], []]
+    data_to_show = ["citedby", "title", "year", "link"]
+    for d in author_data["pubs"]:
+        print(d)
+        for ds in data_to_show:
+            if ds in d:
+                if ds =="link":
+                    link_str = "<a href=\"https://scholar.google.com/" \
+                               "citations?view_op=view_citation&" \
+                               "citation_for_view={0:s}\">link</a>".format(d[ds])
+                    data_list[data_to_show.index(ds)].append(link_str)
+                else:
+                    data_list[data_to_show.index(ds)].append(d[ds])
+    print(data_list)
     return data_list
 
 
@@ -113,10 +132,28 @@ if __name__ == "__main__":
         # plot citations per year
         figs.append_trace(go.Scatter(x=list(data[a]["cites_per_year"].keys()),
                                      y=list(data[a]["cites_per_year"].values()),
-                                     marker=dict(size=10,color='rgba(100, 115, 250, 0.9)',),
+                                     marker=dict(size=10,
+                                                 color='rgba(100, 115, '
+                                                       '250, 0.9)',),
                                      showlegend=False), ia+1, 2)
         # plot tag cloud
         # TODO
 
         # plot list of papers
+        figs.append_trace(go.Table(columnwidth=[20, 100, 20, 20],
+                                   header=dict(values=["citedby", "title",
+                                                       "year", "link"],
+                                               line_color='rgb(220, 235, 240)',
+                                               fill_color='rgb(220, 235, 240)',
+                                               font=dict(size=10),
+                                               height=40,
+                                               align='left'),
+                                   cells=dict(values=pubs_table(data[a]),
+                                              line_color='rgb(200, 215, 220)',
+                                              fill_color='rgb(200, 215, 220)',
+                                              font=dict(size=10), height=40,
+                                              align='left')
+                                   ),
+                          ia+1, 4)
+
     plotly.offline.plot(figs, filename="temp.html", auto_open=True)
