@@ -89,14 +89,14 @@ if __name__ == "__main__":
                       {"type": "table"}])
 
     print(specs)
-    figs = plotly.tools.make_subplots(rows=len(data), cols=3,
+    figs = plotly.tools.make_subplots(rows=len(data), cols=4,
                                       subplot_titles=str_titles,
                                       specs=specs)
 
     for ia, a in enumerate(data):
         # plot generic info
-        figs.append_trace(go.Table(columnwidth=[80,400],
-                                   header=dict(values=["name/aff", data[a]["name"] +
+        figs.append_trace(go.Table(columnwidth=[20, 100],
+                                   header=dict(values=["name<br>aff", data[a]["name"] +
                                                       "<br>" + data[a]["affiliation"]],
                                                line_color='rgb(220, 235, 240)',
                                                fill_color='rgb(220, 235, 240)',
@@ -113,6 +113,7 @@ if __name__ == "__main__":
         # plot citations per year
         figs.append_trace(go.Scatter(x=list(data[a]["cites_per_year"].keys()),
                                      y=list(data[a]["cites_per_year"].values()),
+                                     marker=dict(size=10,color='rgba(100, 115, 250, 0.9)',),
                                      showlegend=False), ia+1, 2)
         # plot tag cloud
         # TODO
