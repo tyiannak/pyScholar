@@ -11,8 +11,28 @@ tyiannak@gmail.cm
 """
 
 import argparse
+import scholarly
 import sys
 import os
+
+def read_author_data(author_name):
+    author = next(scholarly.search_author(author_name)).fill()
+    a_data = {
+        "name": author.name,
+        "affiliation": author.affiliation,
+        "cites_per_year": author.cites_per_year,
+        "citedby": author.citedby,
+        "hindex": author.hindex,
+        "i10index": author.i10index,
+        "url_picture": author.url_picture,
+        "pubs": [
+            {"title": pub.bib['title'],
+             "year": pub.bib['year'] if "year" in pub.bib  else -1,
+             "citedby": pub.citedby if hasattr(pub, "citedby") else 0
+             }
+            for pub in author.publications]
+    }
+    return a_data
 
 
 def parse_arguments():
@@ -30,4 +50,9 @@ def parse_arguments():
 if __name__ == "__main__":
     args = parse_arguments()
     authors = args.authors
-    print(authors)
+
+    author_data = {}
+
+    for a in authors:
+        author_data[a] = read_author_data(a)
+        print(author_data)
