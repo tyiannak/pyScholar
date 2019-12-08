@@ -12,10 +12,12 @@ tyiannak@gmail.cm
 
 import argparse
 import scholarly
-import sys
-import os
+import plotly
+import plotly.graph_objs as go
+
 
 def read_author_data(author_name):
+    print("reading data for {0:s}".format(author_name))
     author = next(scholarly.search_author(author_name)).fill()
     a_data = {
         "name": author.name,
@@ -51,8 +53,13 @@ if __name__ == "__main__":
     args = parse_arguments()
     authors = args.authors
 
-    author_data = {}
+    data = {a: read_author_data(a) for a in authors}
+    print(data)
 
-    for a in authors:
-        author_data[a] = read_author_data(a)
-        print(author_data)
+    figs = plotly.tools.make_subplots(rows=len(data), cols=3,
+                                      subplot_titles=authors)
+    for ia, a in enumerate(data):
+        figs.append_trace(go.Scatter(x=list(data[a]["cites_per_year"].keys()),
+                                     y=list(data[a]["cites_per_year"].values()),
+                                     showlegend=False), ia+1, 1)
+    plotly.offline.plot(figs, filename="temp.html", auto_open=True)
