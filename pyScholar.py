@@ -39,9 +39,17 @@ def read_author_data(author_name):
     return a_data
 
 
-def create_generic_info_table(author_data):
-    for a in author_data:
-        print(a, author_data[a])
+def generic_info_table(author_data):
+    data_list = [[], []]
+    data_to_show = ["citedby", "hindex", "i10index"]
+    for d in data_to_show:
+        if d in author_data:
+            data_list[0].append(d)
+            data_list[1].append(author_data[d])
+    data_list[0].append("#pubs")
+    data_list[1].append(len(author_data["pubs"]))
+
+    return data_list
 
 
 def parse_arguments():
@@ -71,12 +79,14 @@ if __name__ == "__main__":
 
     str_titles, specs = [], []
     for a in data:
-        str_titles.append(a + " - Info")
-        str_titles.append(a + " - Citations Per Year")
-        str_titles.append(a + " - Tag cloud")
+        str_titles.append("Info")
+        str_titles.append("Citations Per Year")
+        str_titles.append("Tag cloud")
+        str_titles.append("Paper List")
         specs.append([{"type": "table"},
-             {"type": "scatter"},
-             {"type": "scatter"}])
+                      {"type": "scatter"},
+                      {"type": "scatter"},
+                      {"type": "table"}])
 
     print(specs)
     figs = plotly.tools.make_subplots(rows=len(data), cols=3,
@@ -84,16 +94,28 @@ if __name__ == "__main__":
                                       specs=specs)
 
     for ia, a in enumerate(data):
-        figs.append_trace(go.Table(header=dict(values=['A Scores', 'B Scores'],
-                        line_color='darkslategray',
-                        fill_color='lightskyblue',
-                        align='left'),
-            cells=dict(values=[[100, 90, 80, 90],  # 1st column
-                               [95, 85, 75, 95]],  # 2nd column
-                       line_color='darkslategray',
-                       fill_color='lightcyan',
-                       align='left')), ia+1, 1)
+        # plot generic info
+        figs.append_trace(go.Table(columnwidth=[80,400],
+                                   header=dict(values=["name/aff", data[a]["name"] +
+                                                      "<br>" + data[a]["affiliation"]],
+                                               line_color='rgb(220, 235, 240)',
+                                               fill_color='rgb(220, 235, 240)',
+                                               font=dict(size=10),
+                                               height=40,
+                                               align='left'),
+                                   cells=dict(values=generic_info_table(data[a]),
+                                              line_color='rgb(200, 215, 220)',
+                                              fill_color='rgb(200, 215, 220)',
+                                              font=dict(size=10), height=40,
+                                              align='left')
+                                   ),
+                          ia+1, 1)
+        # plot citations per year
         figs.append_trace(go.Scatter(x=list(data[a]["cites_per_year"].keys()),
                                      y=list(data[a]["cites_per_year"].values()),
                                      showlegend=False), ia+1, 2)
+        # plot tag cloud
+        # TODO
+
+        # plot list of papers
     plotly.offline.plot(figs, filename="temp.html", auto_open=True)
