@@ -17,6 +17,7 @@ import os
 import plotly
 import plotly.graph_objs as go
 from nltk.corpus import stopwords
+from collections import Counter
 
 extra_stop_words = ["using", "approach", "method", "based", "case",
                     "within", "use"]
@@ -81,21 +82,15 @@ def wordcloud(author_data):
     word_list = [word for word in word_list if
                  word not in stopwords.words('english') + extra_stop_words]
 
-    from collections import Counter
     word_counts = (Counter(word_list).most_common())
     word_list, freq_list, position_list, color_list = [], [], [], []
     threshold = 3
     n_cols = 3
-    sum_used = [0] * n_cols
     count_used = 0
     for (w, f) in word_counts:
         if f >= threshold:
             word_list.append(w)
             freq_list.append(100 * f / float(len(author_data["pubs"])))
-#            for i in range(n_cols):
-#                if count_used % n_cols == i:
-#                    position_list.append((i, sum_used[i]))
-#                    sum_used[i] += f
             position_list.append((count_used % n_cols, int(count_used / n_cols)))
             count_used += 1
             color_list.append('rgb(20, 10, 50)')
