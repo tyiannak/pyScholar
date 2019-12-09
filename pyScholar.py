@@ -73,7 +73,7 @@ def pubs_table(author_data):
     return data_list
 
 
-def wordcloud(author_data):
+def wordcloud(author_data, per_threshold=3):
     text = ""
     for a in author_data["pubs"]:
         text += (a["title"].lower() + " ")
@@ -82,12 +82,11 @@ def wordcloud(author_data):
                  word not in stopwords.words('english') + extra_stop_words]
     word_counts = (Counter(word_list).most_common())
     word_list, freq_list, position_list, color_list = [], [], [], []
-    threshold = 5
     n_cols = 3
     count_used = 0
     for (w, f) in word_counts:
         per_centage = 100 * f / float(len(author_data["pubs"]))
-        if per_centage >= threshold:
+        if per_centage >= per_threshold:
             word_list.append(w)
             freq_list.append(per_centage)
             position_list.append((count_used % n_cols,
@@ -95,19 +94,21 @@ def wordcloud(author_data):
             count_used += 1
             color_list.append('rgb(20, 10, 50)')
     word_list.append('')
-    freq_list.append(1)
+    freq_list.append(0)
     position_list.append((-0.5, 0))
     color_list.append('rgb(20, 10, 50)')
     word_list.append('')
-    freq_list.append(1)
+    freq_list.append(0)
     position_list.append((n_cols-0.5, 0))
     color_list.append('rgb(20, 10, 50)')
 
     x = [p[0] for p in position_list]
     y = [p[1] for p in position_list]
-    trace = go.Scatter(x=x, y=y, textfont=dict(size=freq_list, color=color_list),
+    font_sizes = [f+1 for f in freq_list]
+    trace = go.Scatter(x=x, y=y, textfont=dict(size=font_sizes,
+                                               color=color_list),
                        hoverinfo='text',
-                       hovertext=['{0}{1}'.format(w, f) for w, f in
+                       hovertext=['{0:s} {1:.1f}%'.format(w, f) for w, f in
                                   zip(word_list, freq_list)],
                        mode='text', text=word_list, showlegend=False)
     return trace
@@ -122,6 +123,11 @@ def parse_arguments():
                         help="list of authors to analyse")
     parser.add_argument("-o", "--output_dir", required=True, nargs=None,
                         help="Output dir")
+    parser.add_argument("-t", "--word_cloud_threshold", required=True,
+                        nargs=None, type=int, default=5,
+                        help="percentage of the less frequent word in "
+                             "tag cloud")
+
     return parser.parse_args()
 
 
@@ -134,8 +140,8 @@ if __name__ == "__main__":
             data = pickle.load(f)
     else:
         data = {a: read_author_data(a) for a in authors}
-        with open('temp.pkl', 'wb') as f:
-            pickle.dump(data, f)
+#        with open('temp.pkl', 'wb') as f:
+#            pickle.dump(data, f)
 
     str_titles, specs = [], []
     for a in data:
@@ -173,7 +179,7 @@ if __name__ == "__main__":
                                      showlegend=False), ia+1, 2)
         # plot tag cloud
         # TODO
-        f = wordcloud(data[a])
+        f = wordcloud(data[a], int(args.word_cloud_threshold))
         figs.append_trace(f, ia+1,3)
 
         # plot list of papers
