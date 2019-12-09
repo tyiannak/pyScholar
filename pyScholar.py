@@ -103,15 +103,8 @@ def wordcloud(author_data):
     position_list.append((n_cols-0.5, 0))
     color_list.append('rgb(20, 10, 50)')
 
-    # create the positions and freqs
-    x, y = [], []
-    for i in position_list:
-        x.append(i[0])
-        y.append(i[1])
-    freqs = []
-    for i in freq_list:
-        freqs.append(i + 1)
-
+    x = [p[0] for p in position_list]
+    y = [p[1] for p in position_list]
     trace = go.Scatter(x=x, y=y, textfont=dict(size=freqs, color=color_list),
                        hoverinfo='text',
                        hovertext=['{0}{1}'.format(w, f) for w, f in
