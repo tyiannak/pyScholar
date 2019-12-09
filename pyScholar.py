@@ -16,7 +16,10 @@ import pickle
 import os
 import plotly
 import plotly.graph_objs as go
+from nltk.corpus import stopwords
 
+extra_stop_words = ["using", "approach", "method", "based", "case",
+                    "within", "use"]
 
 def read_author_data(author_name):
     print("reading data for {0:s}".format(author_name))
@@ -57,7 +60,6 @@ def pubs_table(author_data):
     data_list = [[], [], [], []]
     data_to_show = ["citedby", "title", "year", "link"]
     for d in author_data["pubs"]:
-        print(d)
         for ds in data_to_show:
             if ds in d:
                 if ds =="link":
@@ -67,9 +69,69 @@ def pubs_table(author_data):
                     data_list[data_to_show.index(ds)].append(link_str)
                 else:
                     data_list[data_to_show.index(ds)].append(d[ds])
-    print(data_list)
     return data_list
 
+
+def wordcloud(author_data):
+    text = ""
+    for a in author_data["pubs"]:
+        text += (a["title"].lower() + " ")
+    print(text)
+    word_list = text.split()
+    word_list = [word for word in word_list if
+                 word not in stopwords.words('english') + extra_stop_words]
+
+    from collections import Counter
+    word_counts = (Counter(word_list).most_common())
+    word_list, freq_list, position_list, color_list = [], [], [], []
+    threshold = 3
+    n_cols = 3
+    sum_used = [0] * n_cols
+    count_used = 0
+    for (w, f) in word_counts:
+        if f >= threshold:
+            word_list.append(w)
+            freq_list.append(100 * f / float(len(author_data["pubs"])))
+#            for i in range(n_cols):
+#                if count_used % n_cols == i:
+#                    position_list.append((i, sum_used[i]))
+#                    sum_used[i] += f
+            position_list.append((count_used % n_cols, int(count_used / n_cols)))
+            count_used += 1
+            color_list.append('rgb(20, 10, 50)')
+    word_list.append('')
+    freq_list.append(1)
+    position_list.append((-0.5, 0))
+    color_list.append('rgb(20, 10, 50)')
+    word_list.append('')
+    freq_list.append(1)
+    position_list.append((n_cols-0.5, 0))
+    color_list.append('rgb(20, 10, 50)')
+
+
+    # get the positions
+    x = []
+    y = []
+    for i in position_list:
+        x.append(i[0])
+        y.append(i[1])
+    import numpy
+    # get the relative occurence frequencies
+    new_freq_list = []
+    for i in freq_list:
+        new_freq_list.append(i + 1)
+
+    trace = go.Scatter(x=x,
+                       y=y,
+                       textfont=dict(size=new_freq_list,
+                                     color=color_list),
+                       hoverinfo='text',
+                       hovertext=['{0}{1}'.format(w, f) for w, f in
+                                  zip(word_list, freq_list)],
+                       mode='text',
+                       text=word_list
+                       )
+    return trace
 
 def parse_arguments():
     """!
@@ -138,6 +200,8 @@ if __name__ == "__main__":
                                      showlegend=False), ia+1, 2)
         # plot tag cloud
         # TODO
+        f = wordcloud(data[a])
+        figs.append_trace(f, ia+1,3)
 
         # plot list of papers
         figs.append_trace(go.Table(columnwidth=[20, 100, 20, 20],
@@ -155,5 +219,6 @@ if __name__ == "__main__":
                                               align='left')
                                    ),
                           ia+1, 4)
+#        figs['layout'].update(xaxis4=dict(range=[-5, 10]))
 
     plotly.offline.plot(figs, filename="temp.html", auto_open=True)
