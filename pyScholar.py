@@ -77,21 +77,21 @@ def wordcloud(author_data):
     text = ""
     for a in author_data["pubs"]:
         text += (a["title"].lower() + " ")
-    print(text)
     word_list = text.split()
     word_list = [word for word in word_list if
                  word not in stopwords.words('english') + extra_stop_words]
-
     word_counts = (Counter(word_list).most_common())
     word_list, freq_list, position_list, color_list = [], [], [], []
-    threshold = 3
+    threshold = 5
     n_cols = 3
     count_used = 0
     for (w, f) in word_counts:
-        if f >= threshold:
+        per_centage = 100 * f / float(len(author_data["pubs"]))
+        if per_centage >= threshold:
             word_list.append(w)
-            freq_list.append(100 * f / float(len(author_data["pubs"])))
-            position_list.append((count_used % n_cols, int(count_used / n_cols)))
+            freq_list.append(per_centage)
+            position_list.append((count_used % n_cols,
+                                  int(count_used / n_cols)))
             count_used += 1
             color_list.append('rgb(20, 10, 50)')
     word_list.append('')
@@ -103,30 +103,22 @@ def wordcloud(author_data):
     position_list.append((n_cols-0.5, 0))
     color_list.append('rgb(20, 10, 50)')
 
-
-    # get the positions
-    x = []
-    y = []
+    # create the positions and freqs
+    x, y = [], []
     for i in position_list:
         x.append(i[0])
         y.append(i[1])
-    import numpy
-    # get the relative occurence frequencies
-    new_freq_list = []
+    freqs = []
     for i in freq_list:
-        new_freq_list.append(i + 1)
+        freqs.append(i + 1)
 
-    trace = go.Scatter(x=x,
-                       y=y,
-                       textfont=dict(size=new_freq_list,
-                                     color=color_list),
+    trace = go.Scatter(x=x, y=y, textfont=dict(size=freqs, color=color_list),
                        hoverinfo='text',
                        hovertext=['{0}{1}'.format(w, f) for w, f in
                                   zip(word_list, freq_list)],
-                       mode='text',
-                       text=word_list
-                       )
+                       mode='text', text=word_list, showlegend=False)
     return trace
+
 
 def parse_arguments():
     """!
@@ -151,7 +143,6 @@ if __name__ == "__main__":
         data = {a: read_author_data(a) for a in authors}
         with open('temp.pkl', 'wb') as f:
             pickle.dump(data, f)
-    print(data)
 
     str_titles, specs = [], []
     for a in data:
@@ -159,12 +150,9 @@ if __name__ == "__main__":
         str_titles.append("Citations Per Year")
         str_titles.append("Tag cloud")
         str_titles.append("Paper List")
-        specs.append([{"type": "table"},
-                      {"type": "scatter"},
-                      {"type": "scatter"},
-                      {"type": "table"}])
+        specs.append([{"type": "table"}, {"type": "scatter"},
+                      {"type": "scatter"}, {"type": "table"}])
 
-    print(specs)
     figs = plotly.tools.make_subplots(rows=len(data), cols=4,
                                       subplot_titles=str_titles,
                                       specs=specs)
@@ -177,21 +165,18 @@ if __name__ == "__main__":
                                                line_color='rgb(220, 235, 240)',
                                                fill_color='rgb(220, 235, 240)',
                                                font=dict(size=10),
-                                               height=40,
-                                               align='left'),
+                                               height=40, align='left'),
                                    cells=dict(values=generic_info_table(data[a]),
                                               line_color='rgb(200, 215, 220)',
                                               fill_color='rgb(200, 215, 220)',
                                               font=dict(size=10), height=40,
-                                              align='left')
-                                   ),
+                                              align='left')),
                           ia+1, 1)
         # plot citations per year
         figs.append_trace(go.Scatter(x=list(data[a]["cites_per_year"].keys()),
                                      y=list(data[a]["cites_per_year"].values()),
                                      marker=dict(size=10,
-                                                 color='rgba(100, 115, '
-                                                       '250, 0.9)',),
+                                                 color='rgb(100, 115, 250)',),
                                      showlegend=False), ia+1, 2)
         # plot tag cloud
         # TODO
