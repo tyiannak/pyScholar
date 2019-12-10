@@ -122,8 +122,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Test calmod")
     parser.add_argument("-a", "--authors", required=True, nargs="+",
                         help="list of authors to analyse")
-    parser.add_argument("-o", "--output_dir", required=True, nargs=None,
-                        help="Output dir")
+    parser.add_argument("-o", "--output", required=True, nargs=None,
+                        help="Output HTML path")
     parser.add_argument("-t", "--word_cloud_threshold", required=True,
                         nargs=None, type=int, default=5,
                         help="percentage of the less frequent word in "
@@ -135,14 +135,16 @@ def parse_arguments():
 if __name__ == "__main__":
     args = parse_arguments()
     authors = args.authors
+    out_file = args.output
 
     if os.path.isfile('temp.pkl'):
         with open('temp.pkl', 'rb') as f:
             data = pickle.load(f)
     else:
         data = {a: read_author_data(a) for a in authors}
-        with open('temp.pkl', 'wb') as f:
-            pickle.dump(data, f)
+#        UNCOMMENT THIS FOR CACHING:
+#        with open('temp.pkl', 'wb') as f:
+#            pickle.dump(data, f)
 
     str_titles, specs = [], []
     for a in data:
@@ -156,8 +158,6 @@ if __name__ == "__main__":
         specs.append([{"type": "table"}, {"type": "scatter", "rowspan": 2},
                       {"type": "table", "rowspan": 2}])
         specs.append([{"type": "scatter"},{},{}]),
-
-    print(specs)
     figs = plotly.tools.make_subplots(rows=len(data)*2, cols=3,
                                       subplot_titles=str_titles,
                                       specs=specs)
@@ -204,4 +204,4 @@ if __name__ == "__main__":
                                    ),
                           2*ia+1, 3)
     figs['layout'].update(height=(len(authors) * 500))
-    plotly.offline.plot(figs, filename="temp.html", auto_open=True)
+    plotly.offline.plot(figs, filename=out_file, auto_open=True)
