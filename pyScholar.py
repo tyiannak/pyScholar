@@ -20,7 +20,7 @@ from nltk.corpus import stopwords
 from collections import Counter
 
 extra_stop_words = ["using", "approach", "method", "based", "case",
-                    "within", "use"]
+                    "within", "use", "via", "towards", "methods"]
 
 def read_author_data(author_name):
     print("reading data for {0:s}".format(author_name))
@@ -66,7 +66,8 @@ def pubs_table(author_data):
                 if ds =="link":
                     link_str = "<a href=\"https://scholar.google.com/" \
                                "citations?view_op=view_citation&" \
-                               "citation_for_view={0:s}\">link</a>".format(d[ds])
+                               "citation_for_view=" \
+                               "{0:s}\">link</a>".format(d[ds])
                     data_list[data_to_show.index(ds)].append(link_str)
                 else:
                     data_list[data_to_show.index(ds)].append(d[ds])
@@ -108,8 +109,8 @@ def wordcloud(author_data, per_threshold=3):
     trace = go.Scatter(x=x, y=y, textfont=dict(size=font_sizes,
                                                color=color_list),
                        hoverinfo='text',
-                       hovertext=['{0:s} {1:.1f}%'.format(w, f) for w, f in
-                                  zip(word_list, freq_list)],
+                       hovertext=['{0:s} {1:.1f}%'.format(w, f)
+                                  for w, f in zip(word_list, freq_list)],
                        mode='text', text=word_list, showlegend=False)
     return trace
 
@@ -140,19 +141,24 @@ if __name__ == "__main__":
             data = pickle.load(f)
     else:
         data = {a: read_author_data(a) for a in authors}
-#        with open('temp.pkl', 'wb') as f:
-#            pickle.dump(data, f)
+        with open('temp.pkl', 'wb') as f:
+            pickle.dump(data, f)
 
     str_titles, specs = [], []
     for a in data:
         str_titles.append("Info")
-        str_titles.append("Citations Per Year")
         str_titles.append("Tag cloud")
         str_titles.append("Paper List")
-        specs.append([{"type": "table"}, {"type": "scatter"},
-                      {"type": "scatter"}, {"type": "table"}])
+        str_titles.append("Citations Per Year")
+        str_titles.append("")
+        str_titles.append("")
 
-    figs = plotly.tools.make_subplots(rows=len(data), cols=4,
+        specs.append([{"type": "table"}, {"type": "scatter", "rowspan": 2},
+                      {"type": "table", "rowspan": 2}])
+        specs.append([{"type": "scatter"},{},{}]),
+
+    print(specs)
+    figs = plotly.tools.make_subplots(rows=len(data)*2, cols=3,
                                       subplot_titles=str_titles,
                                       specs=specs)
 
@@ -168,19 +174,18 @@ if __name__ == "__main__":
                                    cells=dict(values=generic_info_table(data[a]),
                                               line_color='rgb(200, 215, 220)',
                                               fill_color='rgb(200, 215, 220)',
-                                              font=dict(size=10), height=40,
+                                              font=dict(size=10), height=20,
                                               align='left')),
-                          ia+1, 1)
+                          2*ia+1, 1)
         # plot citations per year
         figs.append_trace(go.Scatter(x=list(data[a]["cites_per_year"].keys()),
                                      y=list(data[a]["cites_per_year"].values()),
-                                     marker=dict(size=10,
+                                     marker=dict(size=1,
                                                  color='rgb(100, 115, 250)',),
-                                     showlegend=False), ia+1, 2)
+                                     showlegend=False), 2*ia+2, 1)
         # plot tag cloud
-        # TODO
         f = wordcloud(data[a], int(args.word_cloud_threshold))
-        figs.append_trace(f, ia+1,3)
+        figs.append_trace(f, 2*ia+1, 2)
 
         # plot list of papers
         figs.append_trace(go.Table(columnwidth=[20, 100, 20, 20],
@@ -197,7 +202,6 @@ if __name__ == "__main__":
                                               font=dict(size=10), height=40,
                                               align='left')
                                    ),
-                          ia+1, 4)
-#        figs['layout'].update(xaxis4=dict(range=[-5, 10]))
-
+                          2*ia+1, 3)
+    figs['layout'].update(height=(len(authors) * 500))
     plotly.offline.plot(figs, filename="temp.html", auto_open=True)
