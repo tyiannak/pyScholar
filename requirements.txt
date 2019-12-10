@@ -1,0 +1,3 @@
+scholarly==0.2.5
+nltk==3.2.5
+plotly==4.1.1
