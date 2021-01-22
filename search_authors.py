@@ -22,7 +22,7 @@ def parse_arguments():
     """!
     @brief Parse Arguments for calmod testing.
     """
-    parser = argparse.ArgumentParser(description="Test calmod")
+    parser = argparse.ArgumentParser(description="Search authors")
     parser.add_argument("-a", "--authors", required=True, nargs="+",
                         help="list of authors to analyse")
     parser.add_argument("-o", "--output", required=True, nargs=None,

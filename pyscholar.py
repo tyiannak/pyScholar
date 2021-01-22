@@ -44,6 +44,15 @@ def read_author_data(author_name):
     return a_data
 
 
+def read_pub_data(publication_title):
+    search_query = scholarly.search_pubs(publication_title)
+    try:
+        p = next(search_query)
+    except:
+        p = {'num_citations': 0}
+    return p
+
+
 def generic_info_table(author_data):
     data_list = [[], []]
     data_to_show = ["citedby", "hindex", "i10index"]
