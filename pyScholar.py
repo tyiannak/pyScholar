@@ -11,7 +11,7 @@ tyiannak@gmail.cm
 """
 
 import argparse
-import scholarly
+from scholarly import scholarly
 import pickle
 import os
 import plotly
@@ -24,22 +24,25 @@ extra_stop_words = ["using", "approach", "method", "based", "case",
 
 def read_author_data(author_name):
     print("reading data for {0:s}".format(author_name))
-    author = next(scholarly.search_author(author_name)).fill()
+    search_query = scholarly.search_author(author_name)
+    author = scholarly.fill(next(search_query))
+
+    print(author)
     a_data = {
-        "name": author.name,
-        "affiliation": author.affiliation,
-        "cites_per_year": author.cites_per_year,
-        "citedby": author.citedby,
-        "hindex": author.hindex,
-        "i10index": author.i10index,
-        "url_picture": author.url_picture,
+        "name": author["name"],
+        "affiliation": author["affiliation"],
+        "cites_per_year": author["cites_per_year"],
+        "citedby": author["citedby"],
+        "hindex": author["hindex"],
+        "i10index": author["i10index"],
+        "url_picture": author["url_picture"],
         "pubs": [
-            {"title": pub.bib['title'],
-             "year": pub.bib['year'] if "year" in pub.bib  else -1,
-             "citedby": pub.citedby if hasattr(pub, "citedby") else 0,
-             "link": pub.id_citations if hasattr(pub, "id_citations") else ""
+            {"title": pub['bib']['title'],
+             "year": pub['bib']['pub_year'] if "pub_year" in pub['bib']  else -1,
+             "citedby": pub['num_citations'] if "num_citations" in pub else 0,
+             "link": pub["id_citations"] if "id_citations" in pub else ""
              }
-            for pub in author.publications]
+            for pub in author["publications"]]
     }
     return a_data
 
@@ -165,8 +168,10 @@ if __name__ == "__main__":
     for ia, a in enumerate(data):
         # plot generic info
         figs.append_trace(go.Table(columnwidth=[20, 100],
-                                   header=dict(values=["name<br>aff", data[a]["name"] +
-                                                      "<br>" + data[a]["affiliation"]],
+                                   header=dict(values=["name<br>aff",
+                                                       data[a]["name"] +
+                                                      "<br>" +
+                                                       data[a]["affiliation"]],
                                                line_color='rgb(220, 235, 240)',
                                                fill_color='rgb(220, 235, 240)',
                                                font=dict(size=10),
