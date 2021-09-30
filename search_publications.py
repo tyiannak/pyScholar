@@ -39,7 +39,7 @@ if __name__ == "__main__":
     for pub in lines:
         a = (pyscholar.read_pub_data(pub))
         if 'num_citations' in a:
-            print(a['num_citations'])
+            print(f'{pub}: {a["num_citations"]}')
         else:
-            print(0)
+            print(f'{pub}: 0')
         time.sleep(5)
